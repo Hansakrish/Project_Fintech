@@ -9,3 +9,53 @@ WHERE
     OR EXTRACT(YEAR FROM transaction_date) = EXTRACT(YEAR FROM CURRENT_DATE) - 1
 GROUP BY
     month;
+---- 
+
+CREATE PROCEDURE GetPaginatedAccounts
+    @UserToken NVARCHAR(255), -- OAuth 2 token for user authentication
+    @PageSize INT = 10, -- Number of records to fetch per page (default: 10)
+    @PageNumber INT = 1 -- Page number to fetch (default: 1)
+AS
+BEGIN
+    WITH AuthenticatedUser AS (
+        -- Assuming there is a table storing authentication tokens and user authorization details
+        SELECT UserId
+        FROM UserTokens
+        WHERE Token = @UserToken
+    )
+    , ValidatedUser AS (
+        -- Assuming there is a table storing user details and authorizations
+        SELECT UserId
+        FROM Users U
+        JOIN AuthenticatedUser AU ON U.UserId = AU.UserId
+        WHERE U.IsActive = 1
+    )
+    , PaginatedAccounts AS (
+        -- Assuming there is a table storing account details
+        SELECT 
+            ROW_NUMBER() OVER (ORDER BY AccountId) AS RowNum,
+            AccountId,
+            AccountName,
+            AccountType,
+            AppName
+        FROM Accounts
+        WHERE UserId IN (SELECT UserId FROM ValidatedUser)
+    )
+    SELECT 
+        AccountId,
+        AccountName AS Name,
+        AccountType AS Type,
+        AppName AS App
+    FROM PaginatedAccounts
+    WHERE RowNum BETWEEN (@PageNumber - 1) * @PageSize + 1 AND @PageNumber * @PageSize;
+END;
+
+@UserToken (NVARCHAR(255)):
+
+This parameter represents the OAuth 2 token for user authentication. Users need to provide a valid token to access their account details.
+@PageSize (INT):
+
+This parameter determines the number of records to fetch per page. The default value is set to 10, meaning the stored procedure will return 10 records if the client does not specify a different page size.
+@PageNumber (INT):
+
+This parameter indicates the page number to fetch. The default value is set to 1, meaning the stored procedure will return the first page if the client does not specify a different page number.
