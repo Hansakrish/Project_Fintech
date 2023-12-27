@@ -1,4 +1,4 @@
-# Project_Fintech - Payments Technical User Story with JSON, SQL queries and Power BI desktop 
+# Project_Fintech - Payments API Technical User Story with JSON, SQL queries and Power BI desktop for data visualization
 
 **User stories** - Open Banking Payments project, user stories for API endpoints related to ‘Accounts’ EPIC, covering features like ‘Account List’, and ‘Account Details’ & ‘Account Nickname’.
 
